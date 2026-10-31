@@ -87,7 +87,7 @@ def ask_ai(history):
     full_messages = [{"role": "system", "content": system_instruction}] + history
     
     try:
-        giga = GigaChat(credentials=key, verify_ssl_certs=False)
+        giga = GigaChat(credentials=key, model="GigaChat", verify_ssl_certs=False)
         answer = giga.chat({"messages": full_messages})
         return answer.choices[0].message.content
     except Exception as e:
@@ -178,3 +178,4 @@ if user_input:
 
 st.divider()
 st.caption("Проект по информатике. Сайт носит информационный характер и не заменяет вызов врача.")
+
