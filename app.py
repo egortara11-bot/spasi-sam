@@ -1,34 +1,34 @@
 import streamlit as st
 from gigachat import GigaChat
 
-SITUATIONS = [
+situations = [
     {
         "icon": "🥴",
         "title": "Обморок",
         "keys": ["обморок", "сознан", "потерял", "отключил", "слабост"],
         "steps": [
-            "Проверьте, реагирует ли человек: аккуратно потрясите за плечи и громко спросите: «Что с вами?»",
-            "Если без сознания, запрокиньте ему голову и проверьте дыхание до 10 секунд.",
-            "Срочно вызовите скорую: 103 или 112.",
-            "Если дышит, поверните его на бок. Если не дышит — нужно делать реанимацию.",
-            "Расстегните воротник, откройте окно для свежего воздуха.",
-            "Ждите скорую помощь рядом с человеком.",
+            "Проверьте реакцию: аккуратно потрясите за плечи и громко спросите: «Что случилось?»",
+            "Если без сознания — запрокиньте голову назад и посчитайте дыхание до 10 секунд.",
+            "Срочно звоните в скорую: 103 или 112.",
+            "Если дышит — переверните на бок. Если не дышит — начинайте сердечно-легочную реанимацию.",
+            "Расстегните воротник и пуговицы, откройте форточку или окно.",
+            "Не оставляйте человека одного до приезда врачей.",
         ],
-        "dont": ["Не давайте нюхать нашатырный спирт и не бейте по щекам."],
-        "source": "Памятка МЧС России / Минздрав",
+        "dont": ["Не давайте нюхать нашатырный спирт и не бейте по щекам!"],
+        "source": "Памятка МЧС России",
     },
     {
         "icon": "🫀",
         "title": "Сердечный приступ",
         "keys": ["сердц", "инфаркт", "груд", "давит"],
         "steps": [
-            "Сразу звоните в скорую: 103 или 112!",
-            "Помогите человеку сесть полусидя, согнув колени.",
-            "Расстегните одежду, откройте окно.",
-            "Если у него есть свои таблетки от врача, помогите достать.",
-            "Следите за дыханием до приезда врачей.",
+            "Срочно наберите 103 или 112!",
+            "Усадите человека полусидя, согнув ноги в коленях.",
+            "Ослабьте галстук, ремень и воротник, проветрите комнату.",
+            "Если у него с собой есть лекарство от врача — помогите его достать.",
+            "Будьте рядом и следите, дышит ли он.",
         ],
-        "dont": ["Не разрешайте человеку ходить или вставать."],
+        "dont": ["Не разрешайте вставать или ходить!"],
         "source": "Рекомендации Минздрава РФ",
     },
     {
@@ -36,26 +36,26 @@ SITUATIONS = [
         "title": "Сильное кровотечение",
         "keys": ["кров", "порез", "рана"],
         "steps": [
-            "Вызовите скорую: 103 или 112.",
-            "Сильно прижмите рану чистой салфеткой или рукой через ткань.",
-            "Наложите тугую давящую повязку бинтом.",
-            "Если кровь бьет струей из руки или ноги и повязка не спасает — наложите жгут выше раны.",
-            "Обязательно запишите точное время наложения жгута!",
+            "Сразу вызовите скорую: 103 или 112.",
+            "Зажмите рану чистой тряпкой или салфеткой как можно сильнее.",
+            "Туго замотайте бинтом поверх раны.",
+            "Если кровь хлещет фонтаном из руки/ноги — наложите жгут выше места ранения.",
+            "Напишите на бумажке или ручкой на коже точное время наложения жгута!",
         ],
-        "dont": ["Не трогайте открытую рану грязными руками."],
-        "source": "Инструкция Минздрава по первой помощи",
+        "dont": ["Не лезьте в рану грязными пальцами!"],
+        "source": "Памятка первой помощи",
     },
     {
         "icon": "🌡️",
         "title": "Ожог",
         "keys": ["ожог", "обжег", "кипят", "пламя"],
         "steps": [
-            "Уберите причину ожога (выключите плиту, потушите ткань).",
-            "Охлаждайте место ожога холодной проточной водой 15-20 минут.",
-            "Накройте чистой салфеткой или бинтом без нажима.",
-            "Если ожог сильный — звоните 103 или 112.",
+            "Уберите источник опасности (выключите конфорку, сбейте огонь).",
+            "Подержите обожженное место под холодной водой из-под крана минут 15-20.",
+            "Накройте чистым бинтом или салфеткой, не прижимая сильно.",
+            "При сильном ожоге вызывайте 103 или 112.",
         ],
-        "dont": ["Не мажьте ожог маслом, кремом или спиртом!", "Не вскрывайте волдыри."],
+        "dont": ["Не мажьте маслом, жиром, зеленкой или спиртом!", "Ни в коем случае не лопайте пузыри!"],
         "source": "Памятка МЧС России",
     },
     {
@@ -63,119 +63,133 @@ SITUATIONS = [
         "title": "Обморожение",
         "keys": ["мороз", "холод", "замерз", "обморож"],
         "steps": [
-            "Заведите человека в теплое помещение.",
-            "Снимите мокрую и холодную одежду.",
-            "Укутайте замерзшие руки или ноги теплым пледом или одеялом.",
-            "Дайте теплое сладкое питье (чай, компот).",
-            "Вызовите скорую 103 или 112.",
+            "Заведите пострадавшего в теплое помещение.",
+            "Снимите всю промокшую и холодную одежду.",
+            "Укутайте замерзшие части тела теплым пледом.",
+            "Напоите горячим сладким чаем.",
+            "Вызовите скорую по номеру 103 или 112.",
         ],
-        "dont": ["Не растирайте снегом!", "Не опускайте сразу в горячую воду."],
+        "dont": ["Не растирайте снегом!", "Не суйте руки/ноги сразу в горячую воду!"],
         "source": "Памятка МЧС России",
     },
 ]
 
-def ask_ai(history):
-    key = st.secrets.get("GIGACHAT_CREDENTIALS", "")
-    if key == "":
-        return "В настройках не указан ключ API."
-    
-    system_instruction = (
-        "Ты помощник по первой помощи. Отвечай строго по правилам МЧС России и Минздрава. "
-        "Пиши кратко и по делу: шаги действий, напоминание про 112/103 и запрещенные действия."
-    )
-    
-    full_messages = [{"role": "system", "content": system_instruction}] + history
-    
-    try:
-        giga = GigaChat(credentials=key, model="GigaChat", verify_ssl_certs=False)
-        answer = giga.chat({"messages": full_messages})
-        return answer.choices[0].message.content
-    except Exception as e:
-        return "Ошибка связи с сервисом: " + str(e)
+def ask_ai(chat_history):
+    api_key = st.secrets.get("GIGACHAT_CREDENTIALS", "")
+    if api_key == "":
+        return "Ошибка: не найден ключ GIGACHAT_CREDENTIALS в настройках секретов!"
 
-def find_situation(text):
-    text = text.lower().replace("ё", "е")
-    words = text.split()
-    for situation in SITUATIONS:
-        if situation["title"].lower() in text:
-            return situation
-        for key in situation["keys"]:
-            for word in words:
-                if key in word:
-                    return situation
+    prompt = (
+        "Ты умный помощник по первой медицинской помощи. Отвечай строго по правилам МЧС и Минздрава. "
+        "Пиши понятно и коротко: список действий, напоминание вызвать 112 или 103 и список того, что делать нельзя."
+    )
+
+    all_messages = [{"role": "system", "content": prompt}] + chat_history
+
+    try:
+        chat_bot = GigaChat(
+            credentials=api_key,
+            model="GigaChat",
+            scope="GIGACHAT_API_PERS",
+            verify_ssl_certs=False
+        )
+        response = chat_bot.chat({"messages": all_messages})
+        return response.choices[0].message.content
+    except Exception as err:
+        return "Не удалось связаться с нейросетью: " + str(err)
+
+def check_situation(user_text):
+    clean_text = user_text.lower().replace("ё", "е")
+    words = clean_text.split()
+    
+    for item in situations:
+        if item["title"].lower() in clean_text:
+            return item
+        for k in item["keys"]:
+            for w in words:
+                if k in w:
+                    return item
     return None
 
 st.set_page_config(page_title="Первая помощь", page_icon="🚑")
 
-st.title("🚑 Первая помощь")
-st.write("Справочник первой помощи при неотложных ситуациях.")
-st.error("❗ **Первым делом всегда звоните в скорую помощь: 103 или 112!**")
+st.title("🚑 Помощник по первой помощи")
+st.write("Школьный проект: электронная памятка при неотложных состояниях.")
+st.error("⚠️ Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 with st.sidebar:
-    st.header("Управление")
-    if st.button("🔄 Очистить чат"):
+    st.header("Настройки")
+    if st.button("Очистить переписку"):
         st.session_state.messages = []
-        if "current_preset" in st.session_state:
-            del st.session_state["current_preset"]
+        if "selected_preset" in st.session_state:
+            del st.session_state["selected_preset"]
         st.rerun()
 
-st.write("Частые случаи:")
-cols = st.columns(len(SITUATIONS))
-for i in range(len(SITUATIONS)):
-    item = SITUATIONS[i]
-    if cols[i].button(item["icon"] + " " + item["title"]):
-        st.session_state.current_preset = item
+st.write("Быстрый выбор ситуации:")
 
-if "current_preset" in st.session_state:
-    res = st.session_state.current_preset
-    st.success("Инструкция из базы:")
-    st.subheader(res["icon"] + " " + res["title"])
-    st.write("**Порядок действий:**")
-    for step in res["steps"]:
-        st.checkbox(step, key="btn_" + step)
-    if len(res["dont"]) > 0:
-        st.warning("**Чего делать нельзя:**\n" + "\n".join(["- " + d for d in res["dont"]]))
-    st.caption("Источник: " + res["source"])
+button_cols = st.columns(len(situations))
+for idx in range(len(situations)):
+    sit = situations[idx]
+    if button_cols[idx].button(sit["icon"] + " " + sit["title"]):
+        st.session_state.selected_preset = sit
+
+if "selected_preset" in st.session_state:
+    card = st.session_state.selected_preset
+    st.success("Найдена инструкция в базе:")
+    st.subheader(card["icon"] + " " + card["title"])
+    st.write("**Что нужно делать:**")
+    for action in card["steps"]:
+        st.checkbox(action, key="preset_" + action)
+    if len(card["dont"]) > 0:
+        bad_things = ""
+        for d in card["dont"]:
+            bad_things += "- " + d + "\n"
+        st.warning("**Что делать категорически нельзя:**\n" + bad_things)
+    st.caption("Источник информации: " + card["source"])
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-user_input = st.chat_input("Опишите ситуацию или задайте вопрос...")
+user_query = st.chat_input("Напишите, что случилось...")
 
-if user_input:
-    if "current_preset" in st.session_state:
-        del st.session_state["current_preset"]
-        
-    match = None
+if user_query:
+    if "selected_preset" in st.session_state:
+        del st.session_state["selected_preset"]
+
+    found_item = None
     if len(st.session_state.messages) == 0:
-        match = find_situation(user_input)
-    
-    if match:
+        found_item = check_situation(user_query)
+
+    if found_item:
         with st.chat_message("user"):
-            st.write(user_input)
+            st.write(user_query)
         with st.chat_message("assistant"):
-            st.subheader(match["icon"] + " " + match["title"])
-            st.write("**Порядок действий:**")
-            for step in match["steps"]:
-                st.checkbox(step, key="chat_" + step)
-            if len(match["dont"]) > 0:
-                st.warning("**Чего делать нельзя:**\n" + "\n".join(["- " + d for d in match["dont"]]))
-            st.caption("Источник: " + match["source"])
+            st.subheader(found_item["icon"] + " " + found_item["title"])
+            st.write("**План действий:**")
+            for action in found_item["steps"]:
+                st.checkbox(action, key="query_" + action)
+            if len(found_item["dont"]) > 0:
+                warnings = ""
+                for d in found_item["dont"]:
+                    warnings += "- " + d + "\n"
+                st.warning("**Чего делать нельзя:**\n" + warnings)
+            st.caption("Источник информации: " + found_item["source"])
     else:
-        st.session_state.messages.append({"role": "user", "content": user_input})
+        st.session_state.messages.append({"role": "user", "content": user_query})
         with st.chat_message("user"):
-            st.write(user_input)
-            
+            st.write(user_query)
+
         with st.chat_message("assistant"):
-            with st.spinner("Думаю..."):
-                reply = ask_ai(st.session_state.messages)
-                st.write(reply)
-                st.session_state.messages.append({"role": "assistant", "content": reply})
+            with st.spinner("Спрашиваю у нейросети..."):
+                answer = ask_ai(st.session_state.messages)
+                st.write(answer)
+                st.session_state.messages.append({"role": "assistant", "content": answer})
 
 st.divider()
-st.caption("Проект по информатике. Сайт носит информационный характер и не заменяет вызов врача.")
+st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
+
 
