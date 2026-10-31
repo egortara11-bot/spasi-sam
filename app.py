@@ -87,12 +87,24 @@ def ask_ai(chat_history):
     all_messages = [{"role": "system", "content": prompt}] + chat_history
 
     try:
-        chat_bot = GigaChat(
+        init_bot = GigaChat(
             credentials=api_key,
-            model="GigaChat",
             scope="GIGACHAT_API_PERS",
             verify_ssl_certs=False
         )
+        try:
+            models_list = init_bot.get_models()
+            model_name = models_list.data[0].id
+        except Exception:
+            model_name = "GigaChat"
+
+        chat_bot = GigaChat(
+            credentials=api_key,
+            model=model_name,
+            scope="GIGACHAT_API_PERS",
+            verify_ssl_certs=False
+        )
+
         response = chat_bot.chat({"messages": all_messages})
         return response.choices[0].message.content
     except Exception as err:
@@ -191,5 +203,4 @@ if user_query:
 
 st.divider()
 st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
-
 
