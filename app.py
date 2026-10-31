@@ -86,22 +86,12 @@ def ask_ai(chat_history):
     all_messages = [{"role": "system", "content": prompt}] + chat_history
 
     try:
-        init_bot = GigaChat(
-            credentials=api_key,
-            scope="GIGACHAT_API_PERS",
-            verify_ssl_certs=False
-        )
-        
-        models_data = init_bot.get_models().data
-        real_model_name = models_data[0].id
-
         chat_bot = GigaChat(
             credentials=api_key,
-            model=real_model_name,
+            model="GigaChat-Pro",
             scope="GIGACHAT_API_PERS",
             verify_ssl_certs=False
         )
-        
         response = chat_bot.chat({"messages": all_messages})
         return response.choices[0].message.content
     except Exception as err:
