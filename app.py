@@ -5,7 +5,6 @@ situations = [
     {
         "icon": "🥴",
         "title": "Обморок",
-        "keys": ["обморок", "сознан", "потерял", "отключил", "слабост"],
         "steps": [
             "Проверьте реакцию: аккуратно потрясите за плечи и громко спросите: «Что случилось?»",
             "Если без сознания — запрокиньте голову назад и посчитайте дыхание до 10 секунд.",
@@ -20,7 +19,6 @@ situations = [
     {
         "icon": "🫀",
         "title": "Сердечный приступ",
-        "keys": ["сердц", "инфаркт", "груд", "давит"],
         "steps": [
             "Срочно наберите 103 или 112!",
             "Усадите человека полусидя, согнув ноги в коленях.",
@@ -34,7 +32,6 @@ situations = [
     {
         "icon": "🩹",
         "title": "Сильное кровотечение",
-        "keys": ["кров", "порез", "рана"],
         "steps": [
             "Сразу вызовите скорую: 103 или 112.",
             "Зажмите рану чистой тряпкой или салфеткой как можно сильнее.",
@@ -48,7 +45,6 @@ situations = [
     {
         "icon": "🌡️",
         "title": "Ожог",
-        "keys": ["ожог", "обжег", "кипят", "пламя"],
         "steps": [
             "Уберите источник опасности (выключите конфорку, сбейте огонь).",
             "Подержите обожженное место под холодной водой из-под крана минут 15-20.",
@@ -61,7 +57,6 @@ situations = [
     {
         "icon": "🥶",
         "title": "Обморожение",
-        "keys": ["мороз", "холод", "замерз", "обморож"],
         "steps": [
             "Заведите пострадавшего в теплое помещение.",
             "Снимите всю промокшую и холодную одежду.",
@@ -112,19 +107,6 @@ def ask_ai(chat_history):
     except Exception as err:
         return "Не удалось связаться с нейросетью: " + str(err)
 
-def check_situation(user_text):
-    clean_text = user_text.lower().replace("ё", "е")
-    words = clean_text.split()
-    
-    for item in situations:
-        if item["title"].lower() in clean_text:
-            return item
-        for k in item["keys"]:
-            for w in words:
-                if k in w:
-                    return item
-    return None
-
 st.set_page_config(page_title="Первая помощь", page_icon="🚑")
 
 st.title("🚑 Помощник по первой помощи")
@@ -174,34 +156,15 @@ if user_query:
     if "selected_preset" in st.session_state:
         del st.session_state["selected_preset"]
 
-    found_item = None
-    if len(st.session_state.messages) == 0:
-        found_item = check_situation(user_query)
+    st.session_state.messages.append({"role": "user", "content": user_query})
+    with st.chat_message("user"):
+        st.write(user_query)
 
-    if found_item:
-        with st.chat_message("user"):
-            st.write(user_query)
-        with st.chat_message("assistant"):
-            st.subheader(found_item["icon"] + " " + found_item["title"])
-            st.write("**План действий:**")
-            for action in found_item["steps"]:
-                st.checkbox(action, key="query_" + action)
-            if len(found_item["dont"]) > 0:
-                warnings = ""
-                for d in found_item["dont"]:
-                    warnings += "- " + d + "\n"
-                st.warning("**Чего делать нельзя:**\n" + warnings)
-            st.caption("Источник информации: " + found_item["source"])
-    else:
-        st.session_state.messages.append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.write(user_query)
-
-        with st.chat_message("assistant"):
-            with st.spinner("Спрашиваю у нейросети..."):
-                answer = ask_ai(st.session_state.messages)
-                st.write(answer)
-                st.session_state.messages.append({"role": "assistant", "content": answer})
+    with st.chat_message("assistant"):
+        with st.spinner("Спрашиваю у нейросети..."):
+            answer = ask_ai(st.session_state.messages)
+            st.write(answer)
+            st.session_state.messages.append({"role": "assistant", "content": answer})
 
 st.divider()
 st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
