@@ -86,14 +86,47 @@ def ask_ai(chat_history):
     all_messages = [{"role": "system", "content": prompt}] + chat_history
 
     try:
-        chat_bot = GigaChat(
+        bot = GigaChat(
             credentials=api_key,
-            model="GigaChat-Pro",
             scope="GIGACHAT_API_PERS",
             verify_ssl_certs=False
         )
-        response = chat_bot.chat({"messages": all_messages})
-        return response.choices[0].message.content
+        
+        models_info = bot.get_models()
+        model_names = []
+        
+        for m in models_info.data:
+            if hasattr(m, "id_"):
+                model_names.append(m.id_)
+            elif hasattr(m, "name"):
+                model_names.append(m.name)
+            elif hasattr(m, "model"):
+                model_names.append(m.model)
+            elif hasattr(m, "dict"):
+                d = m.dict()
+                val = d.get("id") or d.get("id_") or d.get("name") or list(d.values())[0]
+                model_names.append(str(val))
+            elif hasattr(m, "model_dump"):
+                d = m.model_dump()
+                val = d.get("id") or d.get("id_") or d.get("name") or list(d.values())[0]
+                model_names.append(str(val))
+
+        last_err = ""
+        for name in model_names:
+            try:
+                chat_bot = GigaChat(
+                    credentials=api_key,
+                    model=name,
+                    scope="GIGACHAT_API_PERS",
+                    verify_ssl_certs=False
+                )
+                response = chat_bot.chat({"model": name, "messages": all_messages})
+                return response.choices[0].message.content
+            except Exception as e:
+                last_err = str(e)
+                continue
+
+        return f"Доступные модели на аккаунте: {model_names}. Ошибка: {last_err}"
     except Exception as err:
         return "Не удалось связаться с нейросетью: " + str(err)
 
