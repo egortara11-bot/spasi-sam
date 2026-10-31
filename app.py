@@ -85,33 +85,17 @@ def ask_ai(chat_history):
     )
     all_messages = [{"role": "system", "content": prompt}] + chat_history
 
-    scopes_to_try = ["GIGACHAT_API_PERS", "GIGACHAT_API_CORP"]
-    models_to_try = ["GigaChat-Pro", "GigaChat", "GigaChat-Max"]
-
-    last_error = ""
-
-    for scope in scopes_to_try:
-        try:
-            bot = GigaChat(credentials=api_key, scope=scope, verify_ssl_certs=False)
-            try:
-                models_data = bot.get_models().data
-                available_names = [m.id for m in models_data]
-            except Exception:
-                available_names = models_to_try
-
-            for m_name in available_names:
-                try:
-                    bot.model = m_name
-                    response = bot.chat({"messages": all_messages})
-                    return response.choices[0].message.content
-                except Exception as e:
-                    last_error = f"Модель {m_name} (scope={scope}): {e}"
-                    continue
-        except Exception as e:
-            last_error = f"Ошибка подключения (scope={scope}): {e}"
-            continue
-
-    return f"Не удалось подключиться к доступной модели. Детали: {last_error}"
+    try:
+        chat_bot = GigaChat(
+            credentials=api_key,
+            model="GigaChat-Lite",
+            scope="GIGACHAT_API_PERS",
+            verify_ssl_certs=False
+        )
+        response = chat_bot.chat({"messages": all_messages})
+        return response.choices[0].message.content
+    except Exception as err:
+        return "Не удалось связаться с нейросетью: " + str(err)
 
 def check_situation(user_text):
     clean_text = user_text.lower().replace("ё", "е")
