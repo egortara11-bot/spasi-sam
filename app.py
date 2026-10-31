@@ -76,39 +76,42 @@ situations = [
 
 def ask_ai(chat_history):
     api_key = st.secrets.get("GIGACHAT_CREDENTIALS", "")
-    if api_key == "":
+    if not api_key:
         return "Ошибка: не найден ключ GIGACHAT_CREDENTIALS в настройках секретов!"
 
     prompt = (
         "Ты умный помощник по первой медицинской помощи. Отвечай строго по правилам МЧС и Минздрава. "
         "Пиши понятно и коротко: список действий, напоминание вызвать 112 или 103 и список того, что делать нельзя."
     )
-
     all_messages = [{"role": "system", "content": prompt}] + chat_history
 
-    try:
-        init_bot = GigaChat(
-            credentials=api_key,
-            scope="GIGACHAT_API_PERS",
-            verify_ssl_certs=False
-        )
+    scopes_to_try = ["GIGACHAT_API_PERS", "GIGACHAT_API_CORP"]
+    models_to_try = ["GigaChat-Pro", "GigaChat", "GigaChat-Max"]
+
+    last_error = ""
+
+    for scope in scopes_to_try:
         try:
-            models_list = init_bot.get_models()
-            model_name = models_list.data[0].id
-        except Exception:
-            model_name = "GigaChat"
+            bot = GigaChat(credentials=api_key, scope=scope, verify_ssl_certs=False)
+            try:
+                models_data = bot.get_models().data
+                available_names = [m.id for m in models_data]
+            except Exception:
+                available_names = models_to_try
 
-        chat_bot = GigaChat(
-            credentials=api_key,
-            model=model_name,
-            scope="GIGACHAT_API_PERS",
-            verify_ssl_certs=False
-        )
+            for m_name in available_names:
+                try:
+                    bot.model = m_name
+                    response = bot.chat({"messages": all_messages})
+                    return response.choices[0].message.content
+                except Exception as e:
+                    last_error = f"Модель {m_name} (scope={scope}): {e}"
+                    continue
+        except Exception as e:
+            last_error = f"Ошибка подключения (scope={scope}): {e}"
+            continue
 
-        response = chat_bot.chat({"messages": all_messages})
-        return response.choices[0].message.content
-    except Exception as err:
-        return "Не удалось связаться с нейросетью: " + str(err)
+    return f"Не удалось подключиться к доступной модели. Детали: {last_error}"
 
 def check_situation(user_text):
     clean_text = user_text.lower().replace("ё", "е")
@@ -203,4 +206,3 @@ if user_query:
 
 st.divider()
 st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
-
