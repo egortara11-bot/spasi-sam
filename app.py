@@ -62,7 +62,7 @@ st.markdown("""
 
 situations = [
     {
-        "icon": "🥴 ",
+        "icon": "🥴",
         "title": "Обморок",
         "steps": [
             "Проверьте реакцию: аккуратно потрясите за плечи и громко спросите: «Что случилось?»",
@@ -76,7 +76,7 @@ situations = [
         "source": "Памятка МЧС России",
     },
     {
-        "icon": "🫀 ",
+        "icon": "🫀",
         "title": "Сердечный приступ",
         "steps": [
             "Срочно наберите 103 или 112!",
@@ -89,7 +89,7 @@ situations = [
         "source": "Рекомендации Минздрава РФ",
     },
     {
-        "icon": "🩹 ",
+        "icon": "🩹",
         "title": "Сильное кровотечение",
         "steps": [
             "Сразу вызовите скорую: 103 или 112.",
@@ -102,7 +102,7 @@ situations = [
         "source": "Памятка первой помощи",
     },
     {
-        "icon": "🌡️ ",
+        "icon": "🌡️",
         "title": "Ожог",
         "steps": [
             "Уберите источник опасности (выключите конфорку, сбейте огонь).",
@@ -114,9 +114,8 @@ situations = [
         "source": "Памятка МЧС России",
     },
     {
-        "icon": "🥶 ",
-22:16
-"title": "Обморожение",
+        "icon": "🥶",
+        "title": "Обморожение",
         "steps": [
             "Заведите пострадавшего в теплое помещение.",
             "Снимите всю промокшую и холодную одежду.",
@@ -167,9 +166,9 @@ def ask_ai(chat_history):
     except Exception as err:
         return "Не удалось связаться с нейросетью: " + str(err)
 
-st.title("🚑  Спаси-сам: Помощник по первой помощи")
+st.title("🚑 Спаси-сам: Помощник по первой помощи")
 st.write("Школьный проект: электронная памятка при неотложных состояниях.")
-st.error("⚠️  Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
+st.error("⚠️ Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -193,7 +192,7 @@ with st.sidebar:
     try:
         with open("spasi-sam.apk", "rb") as apk_file:
             st.download_button(
-                label="📲  Скачать приложение (APK)",
+                label="📲 Скачать приложение (APK)",
                 data=apk_file,
                 file_name="Спаси-сам.apk",
                 mime="application/vnd.android.package-archive"
@@ -201,14 +200,14 @@ with st.sidebar:
     except Exception:
         st.caption("Файл приложения spasi-sam.apk скоро появится.")
 
-    with st.expander("💻  Установить приложение на ПК"):
+    with st.expander("💻 Установить приложение на ПК"):
         st.write(
             "1. Нажмите на **три полоски** (или три точки) в правом верхнем углу браузера.\n"
             "2. Выберите **«Дополнительно»** $\\rightarrow$ **«Установить сайт как приложение»**.\n"
             "3. Подтвердите установку — на рабочем столе появится программа «Спаси-сам» с нашей иконкой!"
         )
 
-    with st.expander("📱  Ярлык на телефон"):
+    with st.expander("📱 Ярлык на телефон"):
         st.write(
             "**На Android (Chrome / Яндекс):**\n"
             "Нажмите на три точки в углу браузера и выберите «Добавить на главный экран».\n\n"
@@ -226,8 +225,7 @@ for idx in range(len(situations)):
 
 if "selected_preset" in st.session_state:
     card = st.session_state.selected_preset
-22:16
-st.success("Найдена инструкция в базе:")
+    st.success("Найдена инструкция в базе:")
     st.subheader(card["icon"] + " " + card["title"])
     st.write("**Что нужно делать:**")
     for action in card["steps"]:
@@ -258,6 +256,9 @@ if user_query:
             answer = ask_ai(st.session_state.messages)
             st.write(answer)
             st.session_state.messages.append({"role": "assistant", "content": answer})
+
+st.divider()
+st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
 
 st.divider()
 st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
