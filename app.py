@@ -107,9 +107,9 @@ def ask_ai(chat_history):
     except Exception as err:
         return "Не удалось связаться с нейросетью: " + str(err)
 
-st.set_page_config(page_title="Первая помощь", page_icon="🚑")
+st.set_page_config(page_title="Спаси-сам", page_icon="logo.png")
 
-st.title("🚑 Помощник по первой помощи")
+st.title("🚑 Спаси-сам: Помощник по первой помощи")
 st.write("Школьный проект: электронная памятка при неотложных состояниях.")
 st.error("⚠️ Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
 
@@ -117,12 +117,49 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 with st.sidebar:
+    try:
+        st.image("logo.png", width=120)
+    except Exception:
+        pass
+
     st.header("Настройки")
     if st.button("Очистить переписку"):
         st.session_state.messages = []
         if "selected_preset" in st.session_state:
             del st.session_state["selected_preset"]
         st.rerun()
+
+    st.divider()
+    st.subheader("Быстрый доступ")
+
+    try:
+        with open("spasi-sam.apk", "rb") as apk_file:
+            st.download_button(
+                label="📲 Скачать приложение (APK)",
+                data=apk_file,
+                file_name="Спаси-сам.apk",
+                mime="application/vnd.android.package-archive"
+            )
+    except Exception:
+        st.caption("Файл приложения spasi-sam.apk скоро появится.")
+
+    site_url = "https://spasi-sam.streamlit.app"
+    shortcut_text = "[InternetShortcut]\nURL=" + site_url + "\n"
+
+    st.download_button(
+        label="💻 Скачать ярлык на ПК",
+        data=shortcut_text,
+        file_name="Спаси-сам.url",
+        mime="text/plain"
+    )
+
+    with st.expander("📱 Ярлык на телефон"):
+        st.write(
+            "**На Android (Chrome / Яндекс):**\n"
+            "Нажмите на три точки в углу браузера и выберите «Добавить на главный экран».\n\n"
+            "**На iPhone (Safari):**\n"
+            "Нажмите кнопку «Поделиться» внизу экрана и выберите «На экран Домой»."
+        )
 
 st.write("Быстрый выбор ситуации:")
 
