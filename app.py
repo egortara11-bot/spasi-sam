@@ -1,65 +1,6 @@
 import streamlit as st
 from gigachat import GigaChat
 
-st.set_page_config(page_title="Спаси-сам", page_icon="logo.png", layout="centered")
-
-st.markdown("""
-<style>
-    .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stApp {
-            background: linear-gradient(135deg, #0f172a 1e-09%, #1e293b 100%);
-        }
-    }
-
-    h1 {
-        background: linear-gradient(45deg, #ff4b4b, #ff8f00);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        animation: fadeInDown 0.8s ease-out;
-    }
-
-    div.stButton > button {
-        border-radius: 14px;
-        border: none;
-        background: white;
-        color: #1e293b;
-        font-weight: 600;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    div.stButton > button:hover {
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 8px 25px rgba(255, 75, 75, 0.25);
-        background: #ff4b4b;
-        color: white;
-    }
-
-    @keyframes fadeInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    [data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(10px);
-        border-right: 1px solid rgba(255, 255, 255, 0.3);
-    }
-</style>
-""", unsafe_allow_html=True)
-
 situations = [
     {
         "icon": "🥴",
@@ -166,6 +107,8 @@ def ask_ai(chat_history):
     except Exception as err:
         return "Не удалось связаться с нейросетью: " + str(err)
 
+st.set_page_config(page_title="Спаси-сам", page_icon="logo.png")
+
 st.title("🚑 Спаси-сам: Помощник по первой помощи")
 st.write("Школьный проект: электронная памятка при неотложных состояниях.")
 st.error("⚠️ Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
@@ -258,8 +201,4 @@ if user_query:
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
 st.divider()
-st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
-
-st.divider()
-st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
 st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
