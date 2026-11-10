@@ -1,4 +1,4 @@
-import streamlit as st
+mport streamlit as st
 from gigachat import GigaChat
 
 situations = [
@@ -118,7 +118,7 @@ if "messages" not in st.session_state:
 
 with st.sidebar:
     try:
-        st.image("logo.png", width=120)
+        st.image("logo.png", width=130)
     except Exception:
         pass
 
@@ -143,15 +143,12 @@ with st.sidebar:
     except Exception:
         st.caption("Файл приложения spasi-sam.apk скоро появится.")
 
-    site_url = "https://spasi-sam.streamlit.app"
-    shortcut_html = f'<meta http-equiv="refresh" content="0; url={site_url}">'
-
-    st.download_button(
-        label="💻 Скачать ярлык на ПК",
-        data=shortcut_html,
-        file_name="Спаси-сам.html",
-        mime="text/html"
-    )
+    with st.expander("💻 Установить приложение на ПК"):
+        st.write(
+            "1. Нажмите на **три полоски** (или три точки) в правом верхнем углу браузера.\n"
+            "2. Выберите **«Дополнительно»** $\\rightarrow$ **«Установить сайт как приложение»**.\n"
+            "3. Подтвердите установку — на рабочем столе появится программа «Спаси-сам» с нашей иконкой!"
+        )
 
     with st.expander("📱 Ярлык на телефон"):
         st.write(
@@ -205,4 +202,3 @@ if user_query:
 
 st.divider()
 st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
-
