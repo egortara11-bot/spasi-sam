@@ -144,13 +144,13 @@ with st.sidebar:
         st.caption("Файл приложения spasi-sam.apk скоро появится.")
 
     site_url = "https://spasi-sam.streamlit.app"
-    shortcut_text = "[InternetShortcut]\nURL=" + site_url + "\n"
+    shortcut_html = f'<meta http-equiv="refresh" content="0; url={site_url}">'
 
     st.download_button(
         label="💻 Скачать ярлык на ПК",
-        data=shortcut_text,
-        file_name="Спаси-сам.url",
-        mime="text/plain"
+        data=shortcut_html,
+        file_name="Спаси-сам.html",
+        mime="text/html"
     )
 
     with st.expander("📱 Ярлык на телефон"):
@@ -205,3 +205,4 @@ if user_query:
 
 st.divider()
 st.caption("Проект по информатике ученика средней школы. Не является медицинской консультацией.")
+
