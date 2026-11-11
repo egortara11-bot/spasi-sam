@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from gigachat import GigaChat
 
 st.set_page_config(page_title="Спаси-сам", page_icon="logo.png", layout="wide")
@@ -7,12 +8,12 @@ situations = [
     {
         "icon": "🥴",
         "title": "Обморок",
-        "pose": "ноги_вверх",
+        "pose": "legs_up",
         "steps": [
             "Проверьте реакцию: аккуратно потрясите за плечи и громко спросите: «Что случилось?»",
             "Если без сознания — запрокиньте голову назад и посчитайте дыхание до 10 секунд.",
             "Срочно звоните в скорую: 103 или 112.",
-            "Если дышит — уложите на спину и приподнимите ноги выше уровня сердца.",
+            "Если дышит — уложите на спину и приподнимите ноги выше уровня сердца (или поверните на бок).",
             "Расстегните воротник и пуговицы, откройте форточку или окно.",
             "Не оставляйте человека одного до приезда врачей.",
         ],
@@ -22,7 +23,7 @@ situations = [
     {
         "icon": "🫀",
         "title": "Сердечный приступ",
-        "pose": "полусидя",
+        "pose": "half_sitting",
         "steps": [
             "Срочно наберите 103 или 112!",
             "Усадите человека полусидя, согнув ноги в коленях.",
@@ -36,9 +37,10 @@ situations = [
     {
         "icon": "🩹",
         "title": "Сильное кровотечение",
-        "pose": "ноги_вверх",
+        "pose": "legs_up",
         "steps": [
             "Сразу вызовите скорую: 103 или 112.",
+            "Уложите пострадавшего и приподнимите раненую конечность выше уровня сердца.",
             "Зажмите рану чистой тряпкой или салфеткой как можно сильнее.",
             "Туго замотайте бинтом поверх раны.",
             "Если кровь хлещет фонтаном из руки/ноги — наложите жгут выше места ранения.",
@@ -50,7 +52,7 @@ situations = [
     {
         "icon": "🌡️",
         "title": "Ожог",
-        "pose": "сидя",
+        "pose": "sitting",
         "steps": [
             "Уберите источник опасности (выключите конфорку, сбейте огонь).",
             "Подержите обожженное место под холодной водой из-под крана минут 15-20.",
@@ -63,7 +65,7 @@ situations = [
     {
         "icon": "🥶",
         "title": "Обморожение",
-        "pose": "сидя",
+        "pose": "half_sitting",
         "steps": [
             "Заведите пострадавшего в теплое помещение.",
             "Снимите всю промокшую и холодную одежду.",
@@ -76,17 +78,227 @@ situations = [
     },
 ]
 
-def get_pose(text):
+def detect_pose_from_text(text):
     t = text.lower()
-    if "выше сердца" in t or "приподнимите ног" in t or "поднять ног" in t or "сломал ногу" in t or "обморок" in t:
-        return "ноги_вверх"
-    if "полусидя" in t or "полулежа" in t or "сердц" in t:
-        return "полусидя"
-    if "на бок" in t or "боковое" in t:
-        return "на_боку"
-    if "реанимац" in t or "на спину" in t or "не дышит" in t:
-        return "на_спине"
-    return "сидя"
+    if "[поза: ноги_вверх]" in t or "выше сердца" in t or "выше уровня сердца" in t or "приподнимите ног" in t or "поднять ног" in t or "сломал ногу" in t or "перелом ног" in t:
+        return "legs_up"
+    if "[поза: полусидя]" in t or "полусидя" in t or "полулежа" in t:
+        return "half_sitting"
+    if "[поза: на_боку]" in t or "на бок" in t or "боковое положение" in t:
+        return "recovery_side"
+    if "[поза: на_спине]" in t or "реанимац" in t or "непрямой массаж" in t or "ровную твердую поверхность" in t or "на спину" in t:
+        return "flat_back"
+    if "[поза: сидя]" in t or "наклоните голову вперед" in t or "усадите" in t:
+        return "sitting"
+    return "standing"
+
+def render_3d_mannequin(pose):
+    pose_titles = {
+        "standing": "🧍 Ожидание (базовая стойка)",
+        "legs_up": "🦵 На спине, ноги выше уровня сердца",
+        "half_sitting": "🛋️ Полусидя с согнутыми коленями",
+        "recovery_side": "🛌 Устойчивое боковое положение",
+        "flat_back": "🚑 Ровно на спине (контроль дыхания / СЛР)",
+        "sitting": "🪑 Сидя (покой и осмотр)"
+    }
+    title = pose_titles.get(pose, "🧍 Ожидание")
+
+    html_code = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ margin: 0; overflow: hidden; background: #0f172a; font-family: sans-serif; color: white; border-radius: 12px; }}
+            #label {{
+                position: absolute; top: 12px; left: 12px; right: 12px;
+                background: rgba(30, 41, 59, 0.85); padding: 10px 14px;
+                border-radius: 10px; font-size: 14px; font-weight: bold;
+                border-left: 4px solid #38bdf8; pointer-events: none;
+            }}
+            #hint {{
+                position: absolute; bottom: 10px; width: 100%; text-align: center;
+                font-size: 12px; color: #94a3b8; pointer-events: none;
+            }}
+        </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    </head>
+    <body>
+        <div id="label">Положение 3D-модели:<br><span style="color:#38bdf8">{title}</span></div>
+        <div id="hint">🔄 Зажмите мышку (или палец), чтобы крутить 3D-модель</div>
+        <script>
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(2.8, 2.2, 3.2);
+
+            const renderer = new THREE.WebGLRenderer({{ antialias: true }});
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 0.7, 0);
+            controls.enableDamping = true;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(4, 8, 5);
+            scene.add(dirLight);
+
+            const grid = new THREE.GridHelper(6, 12, 0x334155, 0x1e293b);
+            scene.add(grid);
+
+            const matBody = new THREE.MeshStandardMaterial({{ color: 0x38bdf8, roughness: 0.35 }});
+            const matJoint = new THREE.MeshStandardMaterial({{ color: 0xf8fafc, roughness: 0.2 }});
+            const matHeart = new THREE.MeshStandardMaterial({{ color: 0xef4444, emissive: 0x7f1d1d }});
+            const matProp = new THREE.MeshStandardMaterial({{ color: 0x475569, roughness: 0.7 }});
+
+            const human = new THREE.Group();
+            scene.add(human);
+
+            const pelvis = new THREE.Group();
+            pelvis.position.set(0, 0.95, 0);
+            human.add(pelvis);
+
+            const pelvisMesh = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.16, 0.22), matBody);
+            pelvis.add(pelvisMesh);
+
+            const spine = new THREE.Group();
+            spine.position.set(0, 0.08, 0);
+            pelvis.add(spine);
+
+            const torsoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.52, 0.22), matBody);
+            torsoMesh.position.set(0, 0.26, 0);
+            spine.add(torsoMesh);
+
+            const heartMesh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16), matHeart);
+            heartMesh.position.set(0.05, 0.35, 0.12);
+            spine.add(heartMesh);
+
+            const head = new THREE.Group();
+            head.position.set(0, 0.56, 0);
+            spine.add(head);
+
+            const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.15, 24, 24), matJoint);
+            headMesh.position.set(0, 0.14, 0);
+            head.add(headMesh);
+
+            function makeLimb(w, len, mat) {{
+                const g = new THREE.Group();
+                const j = new THREE.Mesh(new THREE.SphereGeometry(w * 0.65, 12, 12), matJoint);
+                g.add(j);
+                const m = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.5, w * 0.45, len, 12), mat);
+                m.position.y = -len / 2;
+                g.add(m);
+                const end = new THREE.Group();
+                end.position.y = -len;
+                g.add(end);
+                return {{ root: g, end: end }};
+            }}
+
+            const lUpperArm = makeLimb(0.09, 0.32, matBody);
+            lUpperArm.root.position.set(0.25, 0.48, 0);
+            spine.add(lUpperArm.root);
+            const lLowerArm = makeLimb(0.08, 0.30, matBody);
+            lUpperArm.end.add(lLowerArm.root);
+
+            const rUpperArm = makeLimb(0.09, 0.32, matBody);
+            rUpperArm.root.position.set(-0.25, 0.48, 0);
+            spine.add(rUpperArm.root);
+            const rLowerArm = makeLimb(0.08, 0.30, matBody);
+            rUpperArm.end.add(rLowerArm.root);
+
+            const lThigh = makeLimb(0.12, 0.44, matBody);
+            lThigh.root.position.set(0.12, -0.05, 0);
+            pelvis.add(lThigh.root);
+            const lCalf = makeLimb(0.10, 0.44, matBody);
+            lThigh.end.add(lCalf.root);
+
+            const rThigh = makeLimb(0.12, 0.44, matBody);
+            rThigh.root.position.set(-0.12, -0.05, 0);
+            pelvis.add(rThigh.root);
+            const rCalf = makeLimb(0.10, 0.44, matBody);
+            rThigh.end.add(rCalf.root);
+
+            const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.35, 0.45), matProp);
+            pillow.visible = false;
+            scene.add(pillow);
+
+            const pose = "{pose}";
+
+            if (pose === "legs_up") {{
+                pelvis.position.set(0, 0.14, 0);
+                pelvis.rotation.x = -Math.PI / 2;
+                lThigh.root.rotation.x = 0.65;
+                lCalf.root.rotation.x = -0.55;
+                rThigh.root.rotation.x = 0.65;
+                rCalf.root.rotation.x = -0.55;
+                lUpperArm.root.rotation.z = 0.25;
+                rUpperArm.root.rotation.z = -0.25;
+                pillow.visible = true;
+                pillow.position.set(0, 0.18, 0.68);
+                controls.target.set(0, 0.3, 0);
+            }} else if (pose === "half_sitting") {{
+                pelvis.position.set(0, 0.14, 0);
+                pelvis.rotation.x = -Math.PI / 2;
+                spine.rotation.x = 0.85;
+                head.rotation.x = 0.2;
+                lThigh.root.rotation.x = 0.55;
+                lCalf.root.rotation.x = -0.9;
+                rThigh.root.rotation.x = 0.55;
+                rCalf.root.rotation.x = -0.9;
+                lUpperArm.root.rotation.x = -0.6;
+                rUpperArm.root.rotation.x = -0.6;
+                pillow.visible = true;
+                pillow.position.set(0, 0.25, -0.28);
+                controls.target.set(0, 0.4, 0);
+            }} else if (pose === "recovery_side") {{
+                pelvis.position.set(0, 0.16, 0);
+                pelvis.rotation.x = -Math.PI / 2;
+                pelvis.rotation.y = 1.25;
+                lThigh.root.rotation.x = 0.85;
+                lCalf.root.rotation.x = -1.1;
+                lUpperArm.root.rotation.x = 0.8;
+                lLowerArm.root.rotation.x = 1.0;
+                controls.target.set(0, 0.25, 0);
+            }} else if (pose === "flat_back") {{
+                pelvis.position.set(0, 0.14, 0);
+                pelvis.rotation.x = -Math.PI / 2;
+                lUpperArm.root.rotation.z = 0.2;
+                rUpperArm.root.rotation.z = -0.2;
+                controls.target.set(0, 0.25, 0);
+            }} else if (pose === "sitting") {{
+                pelvis.position.set(0, 0.52, 0);
+                lThigh.root.rotation.x = Math.PI / 2;
+                lCalf.root.rotation.x = -Math.PI / 2;
+                rThigh.root.rotation.x = Math.PI / 2;
+                rCalf.root.rotation.x = -Math.PI / 2;
+                spine.rotation.x = 0.15;
+                lUpperArm.root.rotation.x = 0.4;
+                lLowerArm.root.rotation.x = 0.7;
+                rUpperArm.root.rotation.x = 0.4;
+                rLowerArm.root.rotation.x = 0.7;
+                pillow.visible = true;
+                pillow.position.set(0, 0.22, 0);
+                controls.target.set(0, 0.6, 0);
+            }}
+
+            let t = 0;
+            function animate() {{
+                requestAnimationFrame(animate);
+                t += 0.05;
+                const s = 1 + Math.sin(t * 2) * 0.12;
+                heartMesh.scale.set(s, s, s);
+                controls.update();
+                renderer.render(scene, camera);
+            }}
+            animate();
+        </script>
+    </body>
+    </html>
+    """
+    components.html(html_code, height=460)
 
 def ask_ai(chat_history):
     api_key = st.secrets.get("GIGACHAT_CREDENTIALS", "")
@@ -95,7 +307,9 @@ def ask_ai(chat_history):
 
     prompt = (
         "Ты умный помощник по первой медицинской помощи. Отвечай строго по правилам МЧС и Минздрава. "
-        "Пиши понятно и коротко: список действий, в какое положение уложить человека, напоминание вызвать 112 или 103 и что делать нельзя."
+        "Пиши понятно и коротко: список действий, в какое положение уложить пострадавшего, напоминание вызвать 112 или 103 и список того, что делать нельзя. "
+        "В самом конце ответа обязательно добавь с новой строки одну метку позы для 3D-манекена строго из списка: "
+        "[ПОЗА: НОГИ_ВВЕРХ], [ПОЗА: ПОЛУСИДЯ], [ПОЗА: НА_БОКУ], [ПОЗА: НА_СПИНЕ] или [ПОЗА: СИДЯ]."
     )
     all_messages = [{"role": "system", "content": prompt}] + chat_history
 
@@ -124,13 +338,13 @@ def ask_ai(chat_history):
         return "Не удалось связаться с нейросетью: " + str(err)
 
 st.title("🚑 Спаси-сам: Помощник по первой помощи")
-st.write("Школьный проект: электронная памятка при неотложных состояниях.")
+st.write("Школьный проект: электронная памятка при неотложных состояниях с 3D-ассистентом.")
 st.error("⚠️ Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "current_pose" not in st.session_state:
-    st.session_state.current_pose = "ожидание"
+    st.session_state.current_pose = "standing"
 
 with st.sidebar:
     try:
@@ -141,7 +355,7 @@ with st.sidebar:
     st.header("Настройки")
     if st.button("Очистить переписку"):
         st.session_state.messages = []
-        st.session_state.current_pose = "ожидание"
+        st.session_state.current_pose = "standing"
         if "selected_preset" in st.session_state:
             del st.session_state["selected_preset"]
         st.rerun()
@@ -162,17 +376,20 @@ with st.sidebar:
 
     with st.expander("💻 Установить приложение на ПК"):
         st.write(
-            "1. Нажмите на **три полоски** в правом верхнем углу браузера.\n"
-            "2. Выберите **«Дополнительно»** -> **«Добавить страницу на рабочий стол»**."
+            "1. Нажмите на **три полоски** (или три точки) в правом верхнем углу браузера.\n"
+            "2. Выберите **«Дополнительно»** -> **«Добавить страницу на рабочий стол»**.\n"
+            "3. Подтвердите установку — на рабочем столе появится программа «Спаси-сам» с нашей иконкой!"
         )
 
     with st.expander("📱 Ярлык на телефон"):
         st.write(
-            "**На Android:** меню браузера -> «Добавить на главный экран».\n\n"
-            "**На iPhone:** кнопка «Поделиться» -> «На экран Домой»."
+            "**На Android (Chrome / Яндекс):**\n"
+            "Нажмите на три точки в углу браузера и выберите «Добавить на главный экран».\n\n"
+            "**На iPhone (Safari):**\n"
+            "Нажмите кнопку «Поделиться» внизу экрана и выберите «На экран Домой»."
         )
 
-left_col, right_col = st.columns([2, 1])
+left_col, right_col = st.columns([3, 2])
 
 with left_col:
     st.write("Быстрый выбор ситуации:")
@@ -199,74 +416,15 @@ with left_col:
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+            clean_text = msg["content"]
+            for tag in ["[ПОЗА: НОГИ_ВВЕРХ]", "[ПОЗА: ПОЛУСИДЯ]", "[ПОЗА: НА_БОКУ]", "[ПОЗА: НА_СПИНЕ]", "[ПОЗА: СИДЯ]"]:
+                clean_text = clean_text.replace(tag, "")
+            st.write(clean_text.strip())
 
-user_query = st.chat_input("Напишите, что случилось...")
+user_query = st.chat_input("Напишите, что случилось (например: сломал ногу или упал в обморок)...")
 
 if user_query:
     if "selected_preset" in st.session_state:
         del st.session_state["selected_preset"]
 
-    st.session_state.messages.append({"role": "user", "content": user_query})
-    answer = ask_ai(st.session_state.messages)
-    st.session_state.messages.append({"role": "assistant", "content": answer})
-    st.session_state.current_pose = get_pose(user_query + " " + answer)
-    st.rerun()
-
-with right_col:
-    st.subheader("🧍 Положение пострадавшего")
-    pose = st.session_state.current_pose
-
-    if pose == "ожидание":
-        st.info("Выберите ситуацию слева или напишите вопрос в чат — здесь появится схема, как правильно уложить человека.")
-    elif pose == "ноги_вверх":
-        st.success("**Поза: На спине, ноги выше уровня сердца**")
-        st.code(
-            "             ___ \n"
-            "  _O________/   \\\n"
-            " /        [Валик]\\\n"
-            "===================",
-            language="text"
-        )
-        st.write("🔹 Уложите человека на спину на ровную поверхность.")
-        st.write("🔹 Подложите под ноги сумку, свернутую куртку или подушку (выше уровня сердца).")
-        st.write("🔹 Это обеспечит приток крови к мозгу и уменьшит отек при травме.")
-    elif pose == "полусидя":
-        st.success("**Поза: Полусидя с упором спины**")
-        st.code(
-            "   O  \n"
-            "  /|\\____/\\ \n"
-            " /[Подушка]\\\n"
-            "=============",
-            language="text"
-        )
-        st.write("🔹 Усадите человека, подложив под спину и голову подушку или одежду.")
-        st.write("🔹 Ноги слегка согните в коленях.")
-        st.write("🔹 В такой позе сердцу и легким гораздо легче работать.")
-    elif pose == "на_боку":
-        st.success("**Поза: Устойчивое боковое положение**")
-        st.code(
-            "   _O_ \n"
-            "  /   \\___/\\ \n"
-            " =============",
-            language="text"
-        )
-        st.write("🔹 Аккуратно поверните человека на бок.")
-        st.write("🔹 Верхнюю ногу согните в колене для устойчивости, руку положите под щеку.")
-        st.write("🔹 Защищает дыхательные пути, если человек без сознания.")
-    elif pose == "на_спине":
-        st.error("**Поза: Ровно на твердой поверхности**")
-        st.code(
-            "  _O___________ \n"
-            " ================",
-            language="text"
-        )
-        st.write("🔹 Уложите человека строго на спину на твердый пол.")
-        st.write("🔹 Запрокиньте голову для проверки дыхания и подготовки к СЛР.")
-    elif pose == "сидя":
-        st.info("**Поза: Сидя в покое**")
-        st.write("🔹 Усадите пострадавшего на стул или пол, обеспечьте полный покой.")
-        st.write("🔹 Не позволяйте резко вставать.")
-
-st.divider()
-st.caption("Проект по информатике ученика 9 класса. Не является медицинской консультацией.")
+    st.session_state.messages.append
