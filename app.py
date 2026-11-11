@@ -347,7 +347,14 @@ def ask_ai(chat_history):
 
 st.title("🚑 Спаси-сам: Помощник по первой помощи")
 st.write("Школьный проект: электронная памятка при неотложных состояниях с 3D-ассистентом.")
-st.error("⚠️ Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
+
+# Пункт 1: Кнопка экстренного вызова (SOS)
+col_warn, col_sos = st.columns([4, 1])
+with col_warn:
+    st.error("⚠️ Внимание! Первым делом всегда звоните спасателям: 112 или 103!")
+with col_sos:
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<a href="tel:112" style="display:block; background-color:#ef4444; color:white; text-align:center; padding:10px; border-radius:8px; font-weight:bold; text-decoration:none;">📞 ПОЗВОНИТЬ 112</a>', unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -394,7 +401,23 @@ with st.sidebar:
             "**На iPhone:** кнопка «Поделиться» -> «На экран Домой»."
         )
 
+# Пункт 3: Быстрые теги-подсказки над строкой ввода
+st.write("Быстрые вопросы для проверки:")
+q_cols = st.columns(4)
+quick_query = None
+if q_cols[0].button("🔥 Ожог кипятком"):
+    quick_query = "Что делать при ожоге кипятком?"
+if q_cols[1].button("🥴 Упал в обморок"):
+    quick_query = "Человек упал в обморок, что делать?"
+if q_cols[2].button("🩸 Кровотечение из носа"):
+    quick_query = "Сильное кровотечение из носа"
+if q_cols[3].button("🦴 Сломал ногу"):
+    quick_query = "Сломал ногу видна кость"
+
 user_query = st.chat_input("Напишите, что случилось (например: сломал ногу или упал в обморок)...")
+
+if quick_query:
+    user_query = quick_query
 
 if user_query:
     if "selected_preset" in st.session_state:
@@ -420,9 +443,21 @@ with left_col:
         card = st.session_state.selected_preset
         st.success("Найдена инструкция в базе:")
         st.subheader(card["icon"] + " " + card["title"])
-        st.write("**Что нужно делать:**")
-        for action in card["steps"]:
-            st.checkbox(action, key="preset_" + action)
+        st.write("**Чек-лист выполнения шагов первой помощи:**")
+        
+        # Пункт 2: Счётчик прогресса выполнения чек-листа
+        completed_count = 0
+        total_steps = len(card["steps"])
+        for idx, action in enumerate(card["steps"]):
+            if st.checkbox(action, key=f"preset_chk_{idx}"):
+                completed_count += 1
+        
+        progress = completed_count / total_steps
+        st.progress(progress)
+        if progress == 1.0:
+            st.balloons()
+            st.success("🎉 Все действия выполнены! Ожидайте скорую помощь.")
+
         if len(card["dont"]) > 0:
             bad_things = ""
             for d in card["dont"]:
